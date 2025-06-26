@@ -1,0 +1,42 @@
+/* Sidebar styling */
+#wrapper {
+  min-height: 100vh;
+  display: flex;
+}
+
+#sidebar-wrapper {
+  width: 250px;
+  min-height: 100vh;
+}
+
+#page-content-wrapper {
+  flex: 1;
+}
+
+.container-fluid {
+  background-color: #111; 
+  color: #eee;
+  padding: 1rem; 
+  border-radius: 5px; 
+}
+
+#log-box { 
+  height: 80vh;
+  overflow-y: auto; 
+  background-color: #111; 
+  color: #eee;
+  padding: 1rem; 
+  border-radius: 5px; 
+}
+  
+.log-line { 
+  margin-bottom: 5px;
+}
+
+h6 {
+   font-family: monospace; 
+}
+
+.card-title {
+   font-family: monospace; 
+}

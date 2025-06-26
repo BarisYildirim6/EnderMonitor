@@ -1,0 +1,238 @@
+{% extends 'base.html' %}
+{% block main %}
+  <!-- Page Content -->
+  <div id="page-content-wrapper" class="p-4">
+    <h2>Printer Status</h2>
+    <div class="container-fluid">
+      <div class="row">
+        <div class="p-1 col-md-3 col-sm-6 card-col">
+          <div class="card mb-3">
+            <div class="card-body">
+              <div id="noz-temp-box" class="px-1 py-1 text-center" style="display: flex; justify-content: center; align-items: center; height: 160px; background: 'none'; background-color: '#111219';">
+                <p><span id="noz-temp-val">--</span></p>
+              </div>
+              <h6 class="text-muted font-weight-normal pt-0">Nozzle Temperature</h6>
+            </div>
+          </div>
+        </div>
+        <div class="p-1 col-md-3 col-sm-6 card-col">
+          <div class="card mb-3">
+            <div class="card-body">
+              <div id="bed-temp-box" class="px-1 py-1 text-center" style="display: flex; justify-content: center; align-items: center; height: 160px; background: 'none'; background-color: '#111219';">
+                <p><span id="bed-temp-val">--</span></p>
+              </div>
+              <h6 class="text-muted font-weight-normal pt-0">Bed Temperature</h6>
+            </div>
+          </div>
+        </div>
+        <div class="p-1 col-md-3 col-sm-6 card-col">
+          <div class="card mb-3">
+            <div class="card-body">
+              <div id="duration-box" class="px-1 py-1 text-center" style="display: flex; justify-content: center; align-items: center; height: 160px; background: 'none'; background-color: '#111219';">
+                <p><span id="duration-val">--</span></p>
+              </div>
+                <h6 class="text-muted font-weight-normal pt-0">Print Duration</h6>
+            </div>
+          </div>
+        </div>
+        <div class="p-1 col-md-3 col-sm-6 card-col">
+          <div class="card mb-3">
+            <div class="card-body">
+              <div id="status-box" class="px-1 py-1 text-center" style="display: flex; justify-content: center; align-items: center; height: 160px; background: 'none'; background-color: '#111219';">
+                <p><span id="status-val">--</span></p>
+              </div>
+                <h6 class="text-muted font-weight-normal pt-0">Print Status</h6>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="row d-flex">
+        <div class="p-1 col-md-12 col-sm-24 card-col d-flex">
+          <div class="card w-100">
+            <div class="card-body">
+              <div id="progress" class="progress" role="progressbar" aria-label="Print Progress"
+                  aria-valuenow="75" aria-valuemin="0" aria-valuemax="100"
+                  style="height: 20px;">
+                <div id="progress-bar" class="progress-bar progress-bar-striped bg-success" style="width: 75%;">
+                  75%
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="row d-flex">
+        <div class="p-1 col-md-6 col-sm-12 card-col d-flex">
+          <div class="card mt-4 w-100 d-flex flex-column">
+            <div class="card-body flex-grow-1">
+              <h5 class="card-title">Live Temperature Chart</h5>
+              <canvas id="tempChart" width="400" height="200"></canvas>
+            </div>
+          </div>
+        </div>
+        <div class="p-1 col-md-6 col-sm-12 card-col d-flex">
+          <div class="card mt-4 w-100 d-flex flex-column">
+            <div class="card-body flex-grow-1">
+              <h5 class="card-title">Live Camera Feed</h5>
+              <div class="card-body text-center">
+                <img id="video-stream" src="" width="320" height="240" class="img-fluid rounded border" alt="Live Feed">
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+  const ctx = document.getElementById('tempChart').getContext('2d');
+  const progress = document.getElementById('progress');
+  const progressBar = document.getElementById('progress-bar');
+  const MAX_DATA_POINTS = 30;
+
+  const tempChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: [], // Time or index
+      datasets: [{
+        label: 'Nozzle Temperature (°C)',
+        data: [],
+        borderColor: 'rgba(255, 99, 132, 1)',
+        backgroundColor: 'rgba(255, 99, 132, 0.2)',
+        tension: 0.3,
+      },{
+        label: 'Bed Temperature (°C)',
+        data: [],
+        borderColor: 'rgba(132, 99, 255, 1)',
+        backgroundColor: 'rgba(132, 99, 255, 0.2)',
+        tension: 0.3,
+      }]
+    },
+    options: {
+      scales: {
+        x: { title: { display: true, text: 'Time' } },
+        y: { title: { display: true, text: '°C' }, suggestedMin: 0, suggestedMax: 100 }
+      }
+    }
+  });
+  var socket = io();
+
+  socket.on('connect', function() {
+    console.log("Connected!")
+  });
+
+  socket.on('printer_update', (data) => {
+      const now = new Date().toLocaleTimeString();
+      const nozzleTemperature = parseFloat(data.nozzle_temperature).toFixed(2);
+      const bedTemperature = parseFloat(data.bed_temperature).toFixed(2);
+      const elapsed = parseInt(data.print_duration || 0, 10);
+      const total = parseInt(data.total_print_time || 1, 10);
+      const currentProgress = Math.min((elapsed / total) * 100, 100).toFixed(1);
+
+      progress.setAttribute('aria-valuenow', currentProgress);
+      progressBar.style.width = `${currentProgress}%`;
+      progressBar.textContent = `${currentProgress}%`;
+
+      // Optional: Change color dynamically
+      if (currentProgress < 50) {
+      progressBar.classList.remove('bg-success', 'bg-warning');
+      progressBar.classList.add('bg-danger');
+      } else if (currentProgress < 80) {
+      progressBar.classList.remove('bg-success', 'bg-danger');
+      progressBar.classList.add('bg-warning');
+      } else {
+      progressBar.classList.remove('bg-warning', 'bg-danger');
+      progressBar.classList.add('bg-success');
+      }
+
+      document.getElementById('duration-val').textContent = formatSecondsToHHMMSS(elapsed);
+      //console.log("Received:", data);
+      document.getElementById('noz-temp-val').textContent = data.nozzle_temperature;
+      document.getElementById('noz-temp-box').style.background = getNozzleTempColorSchema(data.nozzle_temperature)
+      
+      document.getElementById('bed-temp-val').textContent = data.bed_temperature;
+      document.getElementById('bed-temp-box').style.background = getBedTempColorSchema(data.bed_temperature)
+      
+      document.getElementById('status-val').textContent = data.status;
+      document.getElementById('status-box').style.background = getStatusColorSchema(data.status)
+
+      // Update chart
+      if (tempChart.data.labels.length >= MAX_DATA_POINTS) {
+      tempChart.data.labels.shift();
+      tempChart.data.datasets[0].data.shift();
+      tempChart.data.datasets[1].data.shift();
+      }
+      tempChart.data.labels.push(now);
+      tempChart.data.datasets[0].data.push(nozzleTemperature);
+      tempChart.data.datasets[1].data.push(bedTemperature);
+      tempChart.update();
+  });
+
+  function getNozzleTempColorSchema(entry) {
+      let ratio = (entry / 260)
+
+      let addToRed = (ratio) * 30
+      let addToGreen = (ratio) * 120
+      let addToBlue = (ratio) * 150
+      let firstRed = 115 + addToRed
+      let secondRed = 166 + addToRed
+      let firstGreen = 150 - addToGreen
+      let secondGreen = 212 - addToGreen
+      let firstBlue = 255 - addToBlue
+      let secondBlue = 255 - addToBlue
+
+      return `linear-gradient(120deg, rgb(${firstRed}, ${firstGreen}, ${firstBlue}), rgb(${secondRed}, ${secondGreen}, ${secondBlue}))`
+  }
+
+  function getBedTempColorSchema(entry) {
+      let ratio = (entry / 100)
+
+      let addToRed = (ratio) * 30
+      let addToGreen = (ratio) * 120
+      let addToBlue = (ratio) * 150
+      let firstRed = 115 + addToRed
+      let secondRed = 166 + addToRed
+      let firstGreen = 150 - addToGreen
+      let secondGreen = 212 - addToGreen
+      let firstBlue = 255 - addToBlue
+      let secondBlue = 255 - addToBlue
+
+      return `linear-gradient(120deg, rgb(${firstRed}, ${firstGreen}, ${firstBlue}), rgb(${secondRed}, ${secondGreen}, ${secondBlue}))`
+  }
+
+  function getStatusColorSchema(entry) {
+      let firstColor, secondColor;
+
+      switch (entry) {
+      case "Printing":
+          firstColor = 'rgb(100, 255, 100)';
+          secondColor = 'rgb(0, 180, 0)';
+          break;
+      case "Idle":
+          firstColor = 'rgb(255, 255, 150)';
+          secondColor = 'rgb(220, 220, 0)';
+          break;
+      case "Error":
+      case "Failed":
+          firstColor = 'rgb(255, 100, 100)';
+          secondColor = 'rgb(180, 0, 0)';
+          break;
+      
+      default:
+          firstColor = 'rgb(200, 200, 200)';
+          secondColor = 'rgb(150, 150, 150)';
+          break;
+      }
+
+      return `linear-gradient(120deg, ${firstColor}, ${secondColor})`;
+
+  }
+
+  function formatSecondsToHHMMSS(seconds) {
+      const hrs = Math.floor(seconds / 3600).toString().padStart(2, '0');
+      const mins = Math.floor((seconds % 3600) / 60).toString().padStart(2, '0');
+      const secs = (seconds % 60).toString().padStart(2, '0');
+      return `${hrs}:${mins}:${secs}`;
+  }
+</script>
+{% endblock %}

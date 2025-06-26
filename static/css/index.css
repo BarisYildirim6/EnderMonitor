@@ -1,0 +1,106 @@
+/* index.css */
+
+/* ===== Default (Light Mode) ===== */
+:root {
+  --bg-wrapper: #eee;
+  --bg-main: #eee;
+  --bg-sidebar: #ddd;
+  --bg-card: #fff;
+  --bg-logbox: #ddd;
+
+  --text-main: #111;
+  --text-muted: #555;
+
+  --progress-success: #198754;
+  --progress-warning: #ffc107;
+  --progress-danger: #dc3545;
+}
+
+/* General layout */
+#wrapper {
+  min-height: 100vh;
+  display: flex;
+  background-color: var(--bg-wrapper);
+  color: var(--text-main);
+}
+
+#sidebar-wrapper {
+  width: 250px;
+  min-height: 100vh;
+  background-color: var(--bg-sidebar);
+}
+
+#page-content-wrapper {
+  flex: 1;
+}
+
+.container-fluid {
+  background-color: var(--bg-main);
+  color: var(--text-main);
+  padding: 1rem;
+  border-radius: 5px;
+}
+
+.nav-link {
+    color: var(--text-main);
+}
+
+.card {
+  background-color: var(--bg-card);
+  color: var(--text-main);
+}
+
+.card-title,
+h6 {
+  font-family: monospace;
+}
+
+#log-box {
+  height: 80vh;
+  overflow-y: auto;
+  background-color: var(--bg-logbox);
+  color: var(--text-main);
+  padding: 1rem;
+  border-radius: 5px;
+}
+
+.log-line {
+  margin-bottom: 5px;
+}
+
+/* ===== Dark Mode Overrides ===== */
+.dark-mode {
+  --bg-wrapper: #111;
+  --bg-main: #222;
+  --bg-sidebar: #212529;
+  --bg-card: #1a1a1a;
+  --bg-logbox: #222;
+
+  --text-main: #eee;
+  --text-muted: #bbb;
+
+  --progress-success: #00c851;
+  --progress-warning: #ffbb33;
+  --progress-danger: #ff4444;
+}
+
+/* These styles auto-adjust using variables */
+.dark-mode #sidebar-wrapper {
+  background-color: var(--bg-sidebar);
+}
+
+.dark-mode .container-fluid {
+  background-color: var(--bg-main);
+}
+.dark-mode .card {
+  background-color: var(--bg-card);
+}
+
+.dark-mode #log-box {
+  background-color: var(--bg-logbox);
+  color: var(--text-main);
+}
+
+.dark-mode .text-muted {
+  color: var(--text-muted) !important;
+}

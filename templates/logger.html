@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+{% block main %}
+    <div id="page-content-wrapper" class="p-4">
+        <h2>Live Printer Log</h2>
+        <div id="log-box"></div>
+    </div>
+</div>
+<script>
+    const logBox = document.getElementById("log-box");
+    var socket = io();
+
+    socket.on('printer_update', (data) => {
+        const now = new Date().toLocaleTimeString();
+        console.log("On logger")
+        const logLine = `[${now}] Nozzle: ${data.nozzle_temperature}°C, Bed: ${data.bed_temperature}°C, Status: ${data.status}`;
+        const p = document.createElement("p");
+        p.textContent = logLine;
+        p.classList.add("log-line");
+
+        logBox.appendChild(p);
+
+        // Auto-scroll
+        logBox.scrollTop = logBox.scrollHeight;
+    });
+
+</script>
+{% endblock %}
