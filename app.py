@@ -4,6 +4,7 @@
 import cv2
 import io
 import time
+import serial
 from camera import Camera
 from datetime import datetime, UTC
 from flask_socketio import SocketIO, emit
@@ -13,20 +14,23 @@ from background_worker import BackgroundWorker
 
 app = Flask(__name__)
 api = Api(app)
-socketio = SocketIO(app, async_mode='threading')
+socketio = SocketIO(app, async_mode='gevent')
 
 camera = Camera()
+ser = serial.Serial('/dev/ttyUSB0', 115200, timeout=1)
 
 # Shared printer data
 printer_data = {
     'nozzle_temperature': 'Unknown',
+    'max_nozzle_temperature': 'Unknowm',
     'bed_temperature': 'Unknown',
+    'max_bed_temperature': 'Unknown',
     'print_duration': 0,
-    'total_print_time': 30,
+    'total_print_time': 60,
     'status': 'Idle',
 }
 
-worker = BackgroundWorker(app, printer_data, socketio)
+worker = BackgroundWorker(app, printer_data, socketio, ser)
 worker.start_thread()
 
 class StreamingOutput(io.BufferedIOBase):
