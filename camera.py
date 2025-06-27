@@ -1,31 +1,40 @@
-# camera.py
-import cv2
-import threading
+import picamera2
+from picamera2 import Picamera2
+from picamera2.encoders import MJPEGEncoder
+from picamera2.outputs import FileOutput
+import libcamera
+import io
+
+import subprocess
+from threading import Condition
+import time
+import os
 
 class Camera:
     def __init__(self):
-        self.capture = cv2.VideoCapture(0)
-        self.frame = None
-        self.lock = threading.Lock()
-        self.running = True
-        self.thread = threading.Thread(target=self._update_frame, daemon=True)
-        self.thread.start()
+        self.camera = picamera2.Picamera2()
+        self.camera.configure(self.camera.create_video_configuration(main={"size": (640, 480)}, transform=libcamera.Transform(hflip=0, vflip=1)))
+        self.still_config = self.camera.create_still_configuration()
+        self.encoder = MJPEGEncoder(10000000)
+        self.streamOut = StreamingOutput()
+        self.streamOut2 = FileOutput(self.streamOut)
+        self.encoder.output = [self.streamOut2]
 
-    def _update_frame(self):
-        while self.running:
-            success, frame = self.capture.read()
-            if success:
-                with self.lock:
-                    self.frame = frame
+        self.camera.start_encoder(self.encoder)
 
     def get_frame(self):
-        with self.lock:
-            if self.frame is None:
-                return None
-            ret, buffer = cv2.imencode('.jpg', self.frame)
-            return buffer.tobytes()
+        self.camera.start()
+        with self.streamOut.condition:
+            self.streamOut.condition.wait()
+            self.frame = self.streamOut.frame
+        return self.frame
 
-    def stop(self):
-        self.running = False
-        self.thread.join()
-        self.capture.release()
+class StreamingOutput(io.BufferedIOBase):
+    def __init__(self):
+        self.frame = None
+        self.condition = Condition()
+
+    def write(self, buf):
+        with self.condition:
+            self.frame = buf
+            self.condition.notify_all()
