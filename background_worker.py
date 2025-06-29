@@ -120,7 +120,7 @@ class BackgroundWorker:
                 self.socketio.emit('printer_update', self.printer_data)
             self.socketio.sleep(1)
 
-    def send_gcode(self, command, wait=0.5, max_lines=5):
+    def send_gcode(self, command, wait=0.25, max_lines=5):
         """Send a G-code and wait for valid response lines."""
         self.serial.write((command + "\n").encode('utf-8'))
         time.sleep(wait)

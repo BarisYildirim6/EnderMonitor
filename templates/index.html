@@ -75,7 +75,7 @@
             <div class="card-body flex-grow-1">
               <h5 class="card-title">Live Camera Feed</h5>
               <div class="card-body text-center">
-                <img id="video-stream" src="" width="320" height="240" class="img-fluid rounded border" alt="Live Feed">
+                <img id="video-stream" src="" width="480" height="360" class="img-fluid rounded border" alt="Live Feed">
               </div>
             </div>
           </div>
@@ -145,13 +145,13 @@
       progressBar.classList.add('bg-success');
       }
 
-      document.getElementById('duration-val').textContent = formatSecondsToHHMMSS(elapsed);
+      document.getElementById('duration-val').textContent = formatSecondsToHHMMSS(elapsed) + "/" + formatSecondsToHHMMSS(total);
       //console.log("Received:", data);
       document.getElementById('noz-temp-val').textContent = data.nozzle_temperature;
-      document.getElementById('noz-temp-box').style.background = getNozzleTempColorSchema(data.nozzle_temperature)
+      document.getElementById('noz-temp-box').style.background = getNozzleTempColorSchema(data.nozzle_temperature, data.max_nozzle_temperature)
       
       document.getElementById('bed-temp-val').textContent = data.bed_temperature;
-      document.getElementById('bed-temp-box').style.background = getBedTempColorSchema(data.bed_temperature)
+      document.getElementById('bed-temp-box').style.background = getBedTempColorSchema(data.bed_temperature, data.max_bed_temperature)
       
       document.getElementById('status-val').textContent = data.status;
       document.getElementById('status-box').style.background = getStatusColorSchema(data.status)
@@ -168,8 +168,8 @@
       tempChart.update();
   });
 
-  function getNozzleTempColorSchema(entry) {
-      let ratio = (entry / 260)
+  function getNozzleTempColorSchema(entry, maxEntry) {
+      let ratio = (entry / maxEntry)
 
       let addToRed = (ratio) * 30
       let addToGreen = (ratio) * 120
@@ -184,8 +184,8 @@
       return `linear-gradient(120deg, rgb(${firstRed}, ${firstGreen}, ${firstBlue}), rgb(${secondRed}, ${secondGreen}, ${secondBlue}))`
   }
 
-  function getBedTempColorSchema(entry) {
-      let ratio = (entry / 100)
+  function getBedTempColorSchema(entry, maxEntry) {
+      let ratio = (entry / maxEntry)
 
       let addToRed = (ratio) * 30
       let addToGreen = (ratio) * 120
